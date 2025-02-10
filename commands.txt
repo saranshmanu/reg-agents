@@ -1,0 +1,5 @@
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 780230625232.dkr.ecr.us-east-1.amazonaws.com
+docker build -t project-midnight/agents .
+docker tag project-midnight/agents:latest 780230625232.dkr.ecr.us-east-1.amazonaws.com/project-midnight/agents:latest
+docker push 780230625232.dkr.ecr.us-east-1.amazonaws.com/project-midnight/agents:latest
+aws ecs update-service --cluster project-midnight-cluster --service project-midnight-agent-service --region us-east-1 --force-new-deployment --no-cli-pager

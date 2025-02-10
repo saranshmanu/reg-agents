@@ -1,0 +1,10 @@
+yfinance==0.2.50
+Flask==3.1.0
+flask-cors==5.0.0
+langchain==0.3.12
+openai==1.59.4
+python-dotenv==1.0.1
+langgraph==0.2.59
+gnews==0.3.9
+scikit-learn==1.5.1
+numpy==1.26.4
