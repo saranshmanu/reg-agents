@@ -26,11 +26,11 @@ def create_general_graph() -> Graph:
 
     def prepare_response(state: GeneralState) -> GeneralState:
         if state.get("error"):
-            state["final_response"] = state["error"]
+            state["final_response"] = {"response": state["error"]}
             return state
             
         state["final_response"] = {
-            "analysis": state["analysis"]
+            "response": state["analysis"]
         }
         return state
 
