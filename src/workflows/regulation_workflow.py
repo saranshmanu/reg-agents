@@ -2,10 +2,24 @@ from typing import TypedDict
 from langgraph.graph import StateGraph, Graph
 from ..agents import RegulationAgent, FlintFormatterAgent, ActorIdentificationAgent
 
+"""
+Regulation processing workflow that handles:
+1. Regulation text extraction
+2. Actor identification
+3. FLINT formatting
+4. Response preparation
+"""
 
 class RegulationState(TypedDict):
-    """State for regulation processing pipeline"""
-
+    """
+    State management for regulation processing:
+    - original_question: Input question from user
+    - regulation_text: Extracted regulation content
+    - actor_analysis: Result of actor identification ("Yes"/"No")
+    - flint_format: Formatted regulation in FLINT
+    - final_response: Processed response or error message
+    - error: Any processing errors
+    """
     original_question: str
     regulation_text: str | None
     actor_analysis: str | None
@@ -15,15 +29,21 @@ class RegulationState(TypedDict):
 
 
 def create_regulation_graph() -> Graph:
-    """Creates a state graph for regulation processing"""
-
-    # Initialize agents
+    """
+    Creates a workflow for processing regulation questions:
+    1. Extracts relevant regulation text
+    2. Identifies actors in the regulation
+    3. If actors found, formats to FLINT
+    4. Prepares final response with all components
+    """
+    
+    # Initialize specialized agents for each processing step
     regulation_agent = RegulationAgent()
     actor_agent = ActorIdentificationAgent()
     flint_agent = FlintFormatterAgent()
 
-    # Define state transformations
     def extract_regulation(state: RegulationState) -> RegulationState:
+        """Extracts relevant regulation text from the question"""
         try:
             regulation = regulation_agent.analyze_regulation(state["original_question"])
             state["regulation_text"] = regulation
@@ -33,6 +53,10 @@ def create_regulation_graph() -> Graph:
             return state
 
     def identify_actors(state: RegulationState) -> RegulationState:
+        """
+        Analyzes regulation text to identify relevant actors
+        Returns "Yes" if actors found, otherwise indicates no actors
+        """
         if state.get("error"):
             return state
         try:
@@ -44,10 +68,12 @@ def create_regulation_graph() -> Graph:
             return state
 
     def handle_no_actors(state: RegulationState) -> RegulationState:
+        """Sets error state when no actors are identified in regulation"""
         state["error"] = "Could not find actors for the regulations. Cannot proceed with the request."
         return state
 
     def format_flint(state: RegulationState) -> RegulationState:
+        """Converts regulation text to FLINT format if actors were identified"""
         if state.get("error"):
             return state
         try:
@@ -59,6 +85,13 @@ def create_regulation_graph() -> Graph:
             return state
 
     def prepare_response(state: RegulationState) -> RegulationState:
+        """
+        Assembles final response including:
+        - Original regulation text
+        - Actor analysis results
+        - FLINT formatted version (if applicable)
+        - Any error messages
+        """
         print("Preparing response", state["error"])
         if state.get("error"):
             state["final_response"] = {"response": state["error"]}
@@ -72,12 +105,16 @@ def create_regulation_graph() -> Graph:
         return state
 
     def determine_flint_eligibility(state: RegulationState | str) -> str:
-        """Determines if the regulation is eligible for FLINT formatting based on actor validation"""
+        """
+        Determines whether to proceed with FLINT formatting:
+        - Returns "format" if actors were identified
+        - Returns "no_actors" if no actors found
+        """
         if state["actor_analysis"] != "Yes":
             return "no_actors"
         return "format"
 
-    # Create state graph
+    # Build workflow graph with conditional routing based on actor identification
     workflow = StateGraph(RegulationState)
 
     # Add nodes

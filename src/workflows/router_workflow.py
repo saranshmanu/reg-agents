@@ -1,3 +1,8 @@
+"""
+Main router workflow that handles incoming questions and directs them to appropriate processors.
+Determines if a question is regulation-related or general and routes accordingly.
+"""
+
 from typing import TypedDict
 from langgraph.graph import StateGraph, Graph
 from ..agents import RouterAgent
@@ -5,19 +10,31 @@ from .regulation_workflow import create_regulation_graph
 from .general_workflow import create_general_graph
 
 class RouterState(TypedDict):
-    """State for routing pipeline"""
+    """
+    State management for the router pipeline
+    - message: Original user question
+    - question_type: Classification result determining question category
+    - response: Final processed response from appropriate workflow
+    - error: Any error messages during processing
+    """
     message: str
     question_type: dict | None
     response: dict | None
     error: str | None
 
 def create_router_graph() -> Graph:
-    """Creates a state graph for routing and processing questions"""
+    """
+    Creates a workflow graph that:
+    1. Classifies incoming questions
+    2. Routes to appropriate processor (regulation or general)
+    3. Returns processed response
+    """
     
     # Initialize router agent
     router = RouterAgent()
     
     def classify_question(state: RouterState) -> RouterState:
+        """Determines if the question is regulation-related or general"""
         try:
             classification = router.classify_question(state["message"])
             state["question_type"] = classification
@@ -27,6 +44,11 @@ def create_router_graph() -> Graph:
             return state
 
     def process_request(state: RouterState) -> RouterState:
+        """
+        Routes the question to appropriate processor based on classification:
+        - REGULATION_QUESTION: Handled by regulation workflow
+        - Other: Handled by general workflow
+        """
         if state.get("error"):
             return state
             
