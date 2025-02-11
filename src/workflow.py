@@ -4,6 +4,8 @@ from src.agents import (
     RouterAgent,
     GeneralAgent,
     RegulationAgent,
+    FlintFormatterAgent,
+    ActorIdentificationAgent
 )
 
 
@@ -13,18 +15,18 @@ class State(TypedDict):
     messages: List of conversation messages
     current_response: Current response being generated
     question_type: Classification of the current question
-    analysis_result: Final analysis result from agents
     """
     messages: list[str]
     current_response: str
     question_type: Dict[str, str]
-    analysis_result: str
 
 
 # Initialize agent instances for different tasks
 router = RouterAgent()        # Handles question classification
 general_agent = GeneralAgent()    # Handles general queries
 regulation_agent = RegulationAgent()  # Handles regulation-specific queries
+flint_formatter_agent = FlintFormatterAgent() # Handles formatting for Flint
+actor_identification_agent = ActorIdentificationAgent()  # Handles actor identification
 
 
 def route_question(state: State) -> State:
@@ -53,14 +55,22 @@ def analyze_request(state: State) -> State:
     question = state["messages"][-1]
     
     if question_type == "REGULATION_QUESTION":
-        analysis = regulation_agent.analyze_regulation(question)
+        regulation = regulation_agent.analyze_regulation(question)
+        actor_result = actor_identification_agent.identify(regulation)
+        flint_format = flint_formatter_agent.format(regulation)
+        
+        state["current_response"] = {
+            "classification": question_type,
+            "regulation": regulation,
+            "actor_identification": actor_result,
+            "flint_format": flint_format
+        }
     else:
         analysis = general_agent.answer(question)
-    
-    state["current_response"] = {
-        "classification": question_type,
-        "analysis": analysis
-    }
+        state["current_response"] = {
+            "classification": question_type,
+            "analysis": analysis
+        }
     
     return state
 
@@ -106,7 +116,6 @@ def process_message_flow(message: str) -> str:
         "messages": [message],
         "current_response": "",
         "question_type": {},
-        "analysis_result": "",
     }
     result = graph.invoke(state)
     return result

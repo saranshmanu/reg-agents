@@ -1,4 +1,4 @@
-from .base import BaseClient
+from ..base import BaseClient
 
 class GeneralAgent(BaseClient):
     def answer(self, question: str) -> str:
