@@ -1,7 +1,8 @@
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from src.workflow import process_message_flow
-import os
+
+from src.workflows.router_workflow import create_router_graph
 
 app = Flask(__name__)
 CORS(app)
@@ -12,7 +13,16 @@ def chat():
     data = request.json
     message = data.get("question", "")
 
-    result = process_message_flow(message)
+    workflow = create_router_graph()
+    state = {
+        "message": message,
+        "question_type": None,
+        "response": None,
+        "error": None
+    }
+    result = workflow.invoke(state)
+    result = result["response"] if not result.get("error") else {"error": result["error"]}
+
     return jsonify({"response": result})
 
 
