@@ -22,5 +22,5 @@ Rules:
 
 class ActorIdentificationAgent(BaseClient):
     def identify(self, text: str) -> str:
-        return "This is not a valid regulation"
+        # return "This is not a valid regulation"
         return self.invoke(ACTOR_IDENTIFICATION_PROMPT.format(text=text))
